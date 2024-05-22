@@ -29,14 +29,33 @@ import { AsyncPipe, NgStyle } from '@angular/common';
 export class PageClickCounterComponent {
   protected reset$ = new Subject<void>();
 
-  clicks$ = merge(
-    fromEvent<PointerEvent>(document, 'click').pipe(map(accumulationHandler)),
-    this.reset$.pipe(map(resetHandler))
+  clicks$ = merge (
+    fromEvent<PointerEvent>(document,'click'),
+    this.reset$
   ).pipe(
-    scan((state: PointerEvent[], stateHandlerFn) => stateHandlerFn(state), [])
+    scan(
+      (state: PointerEvent[], event)=>event ? [...state,event] : [],
+      []
+    )
+  );
+
+  clicks_new$ = merge(
+    fromEvent<PointerEvent>(document, 'click')
+    .pipe(
+      //map((event) => accumulationHandler(event)) //Ret a function instead obj
+      map(accumulationHandler)
+      ), 
+    this.reset$
+    .pipe(
+      //map((event) => resetHandler(event))
+      map(resetHandler)
+      )
+  ).pipe(
+      scan((state: PointerEvent[], stateHandlerFn) => stateHandlerFn(state), 
+      []
+    ),
   );
 }
 
-const accumulationHandler = (event: PointerEvent) => (state: PointerEvent[]) =>
-  [...state, event];
+const accumulationHandler = (event: PointerEvent) => (state: PointerEvent[]) => [...state, event];
 const resetHandler = (event: void) => (state: PointerEvent[]) => [];
